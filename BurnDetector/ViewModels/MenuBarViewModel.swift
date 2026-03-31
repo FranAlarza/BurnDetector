@@ -64,7 +64,7 @@ final class MenuBarViewModel {
         if cpuUsage >= settings.threshold {
             if !hasExceededThreshold && settings.soundEnabled {
                 hasExceededThreshold = true
-                await audioPlayer.playScream()
+                await audioPlayer.playSound(named: settings.selectedSound)
             }
         } else {
             hasExceededThreshold = false
