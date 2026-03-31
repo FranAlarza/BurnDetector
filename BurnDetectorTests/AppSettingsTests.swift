@@ -2,10 +2,10 @@ import Foundation
 import Testing
 @testable import BurnDetector
 
+@Suite(.serialized)
 struct AppSettingsTests {
 
     init() {
-        // Clean UserDefaults before each test
         UserDefaults.standard.removeObject(forKey: "cpuThreshold")
         UserDefaults.standard.removeObject(forKey: "soundEnabled")
     }

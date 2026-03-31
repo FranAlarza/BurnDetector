@@ -8,7 +8,7 @@ final class MenuBarViewModel {
 
     private(set) var cpuUsage: Int?
     private(set) var permissionsError = false
-    let settings: AppSettings
+    var settings: AppSettings
 
     // MARK: - Private
 
@@ -51,7 +51,7 @@ final class MenuBarViewModel {
                     let rounded = Int(usage.rounded())
                     self.cpuUsage = rounded
                     self.permissionsError = false
-                    self.checkThreshold(cpuUsage: rounded)
+                    await self.checkThreshold(cpuUsage: rounded)
                 case .failure:
                     self.cpuUsage = nil
                     self.permissionsError = true
@@ -60,13 +60,11 @@ final class MenuBarViewModel {
         }
     }
 
-    private func checkThreshold(cpuUsage: Int) {
+    private func checkThreshold(cpuUsage: Int) async {
         if cpuUsage >= settings.threshold {
             if !hasExceededThreshold && settings.soundEnabled {
                 hasExceededThreshold = true
-                Task {
-                    await audioPlayer.playScream()
-                }
+                await audioPlayer.playScream()
             }
         } else {
             hasExceededThreshold = false

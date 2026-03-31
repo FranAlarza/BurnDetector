@@ -80,74 +80,82 @@ struct MenuBarViewModelTests {
 
 // MARK: - Threshold Alert Tests
 
+@Suite(.serialized)
 struct ThresholdAlertTests {
 
-    private func makeSettings(threshold: Int = 90, soundEnabled: Bool = true) -> AppSettings {
+    init() {
         UserDefaults.standard.removeObject(forKey: "cpuThreshold")
         UserDefaults.standard.removeObject(forKey: "soundEnabled")
-        let settings = AppSettings()
-        settings.threshold = threshold
-        settings.soundEnabled = soundEnabled
-        return settings
     }
 
     @Test @MainActor
     func soundPlaysWhenCrossingThresholdUpward() async throws {
         let audio = MockAudioPlayerService()
         let service = MockCPUMonitoringService(results: [.success(95.0)])
-        let settings = makeSettings(threshold: 90)
-        let _ = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
+        let settings = AppSettings()
+        settings.threshold = 90
+        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
 
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(200))
 
         #expect(audio.playCount == 1)
+        _ = viewModel
     }
 
     @Test @MainActor
     func soundDoesNotPlayWhenBelowThreshold() async throws {
         let audio = MockAudioPlayerService()
         let service = MockCPUMonitoringService(results: [.success(50.0)])
-        let settings = makeSettings(threshold: 90)
-        let _ = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
+        let settings = AppSettings()
+        settings.threshold = 90
+        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
 
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(200))
 
         #expect(audio.playCount == 0)
+        _ = viewModel
     }
 
     @Test @MainActor
     func soundDoesNotRepeatWhileAboveThreshold() async throws {
         let audio = MockAudioPlayerService()
         let service = MockCPUMonitoringService(results: [.success(95.0), .success(97.0), .success(92.0)])
-        let settings = makeSettings(threshold: 90)
-        let _ = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
+        let settings = AppSettings()
+        settings.threshold = 90
+        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
 
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(200))
 
         #expect(audio.playCount == 1)
+        _ = viewModel
     }
 
     @Test @MainActor
     func soundPlaysAgainAfterDroppingAndRising() async throws {
         let audio = MockAudioPlayerService()
         let service = MockCPUMonitoringService(results: [.success(95.0), .success(80.0), .success(95.0)])
-        let settings = makeSettings(threshold: 90)
-        let _ = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
+        let settings = AppSettings()
+        settings.threshold = 90
+        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
 
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(200))
 
         #expect(audio.playCount == 2)
+        _ = viewModel
     }
 
     @Test @MainActor
     func soundDoesNotPlayWhenDisabled() async throws {
         let audio = MockAudioPlayerService()
         let service = MockCPUMonitoringService(results: [.success(95.0)])
-        let settings = makeSettings(threshold: 90, soundEnabled: false)
-        let _ = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
+        let settings = AppSettings()
+        settings.threshold = 90
+        settings.soundEnabled = false
+        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
 
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(200))
 
         #expect(audio.playCount == 0)
+        _ = viewModel
     }
 }
