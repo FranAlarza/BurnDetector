@@ -2,13 +2,25 @@ import SwiftUI
 
 struct MenuBarView: View {
     @Bindable var viewModel: MenuBarViewModel
+    @Environment(\.openSettings) private var openSettings
 
     // MARK: - Body
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("BurnDetector")
-                .font(.headline)
+            HStack {
+                Text("BurnDetector")
+                    .font(.headline)
+
+                Spacer()
+
+                Button {
+                    openSettings()
+                } label: {
+                    Image(systemName: "gear")
+                }
+                .buttonStyle(.plain)
+            }
 
             Text(cpuLabel)
                 .font(.body)
@@ -18,22 +30,6 @@ struct MenuBarView: View {
                 Text("Permissions required to read CPU usage")
                     .font(.caption)
                     .foregroundStyle(.red)
-            }
-
-            Divider()
-
-            // MARK: - Settings
-
-            Toggle("Sound alerts", isOn: $viewModel.settings.soundEnabled)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Threshold: \(viewModel.settings.threshold)%")
-                    .font(.caption)
-                Slider(
-                    value: thresholdBinding,
-                    in: 50...100,
-                    step: 1
-                )
             }
 
             Divider()
@@ -53,12 +49,5 @@ struct MenuBarView: View {
             return "CPU: \(usage)%"
         }
         return "CPU: --%"
-    }
-
-    private var thresholdBinding: Binding<Double> {
-        Binding(
-            get: { Double(viewModel.settings.threshold) },
-            set: { viewModel.settings.threshold = Int($0) }
-        )
     }
 }
