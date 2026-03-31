@@ -15,7 +15,7 @@ final class AudioPlayerService: AudioPlayerServiceProtocol, @unchecked Sendable 
     private var player: AVAudioPlayer?
 
     func playScream() async {
-        guard let url = Bundle.main.url(forResource: "scream", withExtension: "aiff") else {
+        guard let url = Bundle.main.url(forResource: "scream", withExtension: "mp3") else {
             logger.error("Scream audio file not found in bundle")
             return
         }
