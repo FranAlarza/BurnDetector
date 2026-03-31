@@ -63,7 +63,7 @@ struct MenuBarViewModelTests {
         ])
         let viewModel = MenuBarViewModel(service: service)
 
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(200))
 
         #expect(viewModel.cpuUsage == 76)
         #expect(viewModel.permissionsError == false)
