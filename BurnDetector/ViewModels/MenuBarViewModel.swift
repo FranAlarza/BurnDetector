@@ -1,4 +1,12 @@
+//
+//  MenuBarViewModel.swift
+//  BurnDetector
+//
+//  Created by Fran Alarza on 31/3/26.
+//
+
 import Foundation
+import os
 
 @Observable
 @MainActor
@@ -14,9 +22,11 @@ final class MenuBarViewModel {
 
     private let service: CPUMonitoringServiceProtocol
     private let audioPlayer: AudioPlayerServiceProtocol
+    private let storageService: CustomSoundStorageServiceProtocol
     private let interval: TimeInterval
     private nonisolated(unsafe) var monitoringTask: Task<Void, Never>?
     private var hasExceededThreshold = false
+    private let logger = Logger(subsystem: "com.aweapps.BurnDetector", category: "MenuBarViewModel")
 
     // MARK: - Init
 
@@ -24,11 +34,13 @@ final class MenuBarViewModel {
         service: CPUMonitoringServiceProtocol = CPUMonitoringService(),
         audioPlayer: AudioPlayerServiceProtocol = AudioPlayerService(),
         settings: AppSettings = AppSettings(),
+        storageService: CustomSoundStorageServiceProtocol = CustomSoundStorageService(),
         interval: TimeInterval = 2.0
     ) {
         self.service = service
         self.audioPlayer = audioPlayer
         self.settings = settings
+        self.storageService = storageService
         self.interval = interval
         startMonitoring()
     }
@@ -64,7 +76,13 @@ final class MenuBarViewModel {
         if cpuUsage >= settings.threshold {
             if !hasExceededThreshold && settings.soundEnabled {
                 hasExceededThreshold = true
-                await audioPlayer.playSound(named: settings.selectedSound)
+                let allSounds = SoundOption.all(using: storageService)
+                guard let sound = allSounds.first(where: { $0.id == settings.selectedSound }),
+                      let url = sound.url else {
+                    logger.warning("Could not resolve URL for sound '\(settings.selectedSound)', skipping playback")
+                    return
+                }
+                await audioPlayer.playSound(url: url)
             }
         } else {
             hasExceededThreshold = false
