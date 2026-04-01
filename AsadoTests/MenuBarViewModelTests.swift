@@ -29,6 +29,16 @@ final class MockAudioPlayerService: AudioPlayerServiceProtocol, @unchecked Senda
     }
 }
 
+// MARK: - Mock Process Service
+
+struct MockProcessMonitoringService: ProcessMonitoringServiceProtocol {
+    let processes: [TopProcess]
+
+    func topProcesses(limit: Int) -> [TopProcess] {
+        Array(processes.prefix(limit))
+    }
+}
+
 // MARK: - Mock Storage Service
 
 struct MockCustomSoundStorageService: CustomSoundStorageServiceProtocol {
@@ -49,7 +59,7 @@ struct MenuBarViewModelTests {
     @Test @MainActor
     func successUpdatesUsage() async throws {
         let service = MockCPUMonitoringService(results: [.success(42.3)])
-        let viewModel = MenuBarViewModel(service: service)
+        let viewModel = MenuBarViewModel(service: service, processService: MockProcessMonitoringService(processes: []))
 
         try await Task.sleep(for: .milliseconds(500))
 
@@ -60,7 +70,7 @@ struct MenuBarViewModelTests {
     @Test @MainActor
     func failureSetsPermissionsError() async throws {
         let service = MockCPUMonitoringService(results: [.failure(CPUMonitoringError.permissionDenied)])
-        let viewModel = MenuBarViewModel(service: service)
+        let viewModel = MenuBarViewModel(service: service, processService: MockProcessMonitoringService(processes: []))
 
         try await Task.sleep(for: .milliseconds(500))
 
@@ -74,7 +84,7 @@ struct MenuBarViewModelTests {
             .failure(CPUMonitoringError.permissionDenied),
             .success(75.6)
         ])
-        let viewModel = MenuBarViewModel(service: service)
+        let viewModel = MenuBarViewModel(service: service, processService: MockProcessMonitoringService(processes: []))
 
         try await Task.sleep(for: .milliseconds(500))
 
@@ -85,7 +95,7 @@ struct MenuBarViewModelTests {
     @Test @MainActor
     func usageRoundsToNearestInt() async throws {
         let service = MockCPUMonitoringService(results: [.success(99.5)])
-        let viewModel = MenuBarViewModel(service: service)
+        let viewModel = MenuBarViewModel(service: service, processService: MockProcessMonitoringService(processes: []))
 
         try await Task.sleep(for: .milliseconds(500))
 
@@ -110,7 +120,7 @@ struct ThresholdAlertTests {
         let service = MockCPUMonitoringService(results: [.success(95.0)])
         let settings = AppSettings()
         settings.threshold = 90
-        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
+        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings, processService: MockProcessMonitoringService(processes: []))
 
         try await Task.sleep(for: .milliseconds(500))
 
@@ -125,7 +135,7 @@ struct ThresholdAlertTests {
         let service = MockCPUMonitoringService(results: [.success(50.0)])
         let settings = AppSettings()
         settings.threshold = 90
-        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
+        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings, processService: MockProcessMonitoringService(processes: []))
 
         try await Task.sleep(for: .milliseconds(500))
 
@@ -139,7 +149,7 @@ struct ThresholdAlertTests {
         let service = MockCPUMonitoringService(results: [.success(95.0), .success(97.0), .success(92.0)])
         let settings = AppSettings()
         settings.threshold = 90
-        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
+        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings, processService: MockProcessMonitoringService(processes: []))
 
         try await Task.sleep(for: .milliseconds(500))
 
@@ -153,7 +163,7 @@ struct ThresholdAlertTests {
         let service = MockCPUMonitoringService(results: [.success(95.0), .success(80.0), .success(95.0)])
         let settings = AppSettings()
         settings.threshold = 90
-        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
+        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings, processService: MockProcessMonitoringService(processes: []))
 
         try await Task.sleep(for: .milliseconds(500))
 
@@ -168,7 +178,7 @@ struct ThresholdAlertTests {
         let settings = AppSettings()
         settings.threshold = 90
         settings.soundEnabled = false
-        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
+        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings, processService: MockProcessMonitoringService(processes: []))
 
         try await Task.sleep(for: .milliseconds(500))
 
@@ -183,12 +193,61 @@ struct ThresholdAlertTests {
         let settings = AppSettings()
         settings.threshold = 90
         settings.selectedSound = "sheep"
-        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
+        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings, processService: MockProcessMonitoringService(processes: []))
 
         try await Task.sleep(for: .milliseconds(500))
 
         #expect(audio.playCount == 1)
         #expect(audio.lastPlayedURL?.lastPathComponent == "sheep.mp3")
+        _ = viewModel
+    }
+}
+
+// MARK: - Top Process Tests
+
+@Suite(.serialized)
+struct TopProcessTests {
+
+    init() {
+        UserDefaults.standard.removeObject(forKey: "cpuThreshold")
+        UserDefaults.standard.removeObject(forKey: "soundEnabled")
+        UserDefaults.standard.removeObject(forKey: "selectedSound")
+    }
+
+    @Test @MainActor
+    func topProcessesPopulatedWhenAboveThreshold() async throws {
+        let mockProcesses = [
+            TopProcess(id: 1, name: "Safari", cpuUsage: 50.0, icon: nil),
+            TopProcess(id: 2, name: "Xcode", cpuUsage: 30.0, icon: nil),
+            TopProcess(id: 3, name: "mdworker", cpuUsage: 10.0, icon: nil)
+        ]
+        let processService = MockProcessMonitoringService(processes: mockProcesses)
+        let cpuService = MockCPUMonitoringService(results: [.success(95.0)])
+        let settings = AppSettings()
+        settings.threshold = 90
+        let viewModel = MenuBarViewModel(service: cpuService, audioPlayer: MockAudioPlayerService(), settings: settings, processService: processService)
+
+        try await Task.sleep(for: .milliseconds(500))
+
+        #expect(viewModel.topProcesses.count == 3)
+        #expect(viewModel.topProcesses.first?.name == "Safari")
+        _ = viewModel
+    }
+
+    @Test @MainActor
+    func topProcessesClearedWhenBelowThreshold() async throws {
+        let mockProcesses = [
+            TopProcess(id: 1, name: "Safari", cpuUsage: 50.0, icon: nil)
+        ]
+        let processService = MockProcessMonitoringService(processes: mockProcesses)
+        let cpuService = MockCPUMonitoringService(results: [.success(95.0), .success(50.0)])
+        let settings = AppSettings()
+        settings.threshold = 90
+        let viewModel = MenuBarViewModel(service: cpuService, audioPlayer: MockAudioPlayerService(), settings: settings, processService: processService)
+
+        try await Task.sleep(for: .milliseconds(500))
+
+        #expect(viewModel.topProcesses.isEmpty)
         _ = viewModel
     }
 }
