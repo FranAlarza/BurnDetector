@@ -21,12 +21,25 @@ struct MockCPUMonitoringService: CPUMonitoringServiceProtocol {
 
 final class MockAudioPlayerService: AudioPlayerServiceProtocol, @unchecked Sendable {
     private(set) var playCount = 0
-    private(set) var lastPlayedSound: String?
+    private(set) var lastPlayedURL: URL?
 
-    func playSound(named name: String) async {
+    func playSound(url: URL) async {
         playCount += 1
-        lastPlayedSound = name
+        lastPlayedURL = url
     }
+}
+
+// MARK: - Mock Storage Service
+
+struct MockCustomSoundStorageService: CustomSoundStorageServiceProtocol {
+    var storageDirectory: URL { URL(fileURLWithPath: "/tmp/test-sounds") }
+    var customSounds: [SoundOption] = []
+
+    func importSound(from source: URL) throws -> SoundOption {
+        SoundOption(id: source.path, displayName: source.deletingPathExtension().lastPathComponent.capitalized, isCustom: true)
+    }
+    func deleteSound(_ sound: SoundOption) throws {}
+    func allCustomSounds() -> [SoundOption] { customSounds }
 }
 
 // MARK: - CPU Usage Tests
@@ -38,7 +51,7 @@ struct MenuBarViewModelTests {
         let service = MockCPUMonitoringService(results: [.success(42.3)])
         let viewModel = MenuBarViewModel(service: service)
 
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(200))
 
         #expect(viewModel.cpuUsage == 42)
         #expect(viewModel.permissionsError == false)
@@ -49,7 +62,7 @@ struct MenuBarViewModelTests {
         let service = MockCPUMonitoringService(results: [.failure(CPUMonitoringError.permissionDenied)])
         let viewModel = MenuBarViewModel(service: service)
 
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(200))
 
         #expect(viewModel.cpuUsage == nil)
         #expect(viewModel.permissionsError == true)
@@ -74,7 +87,7 @@ struct MenuBarViewModelTests {
         let service = MockCPUMonitoringService(results: [.success(99.5)])
         let viewModel = MenuBarViewModel(service: service)
 
-        try await Task.sleep(for: .milliseconds(100))
+        try await Task.sleep(for: .milliseconds(200))
 
         #expect(viewModel.cpuUsage == 100)
     }
@@ -102,7 +115,7 @@ struct ThresholdAlertTests {
         try await Task.sleep(for: .milliseconds(200))
 
         #expect(audio.playCount == 1)
-        #expect(audio.lastPlayedSound == "scream")
+        #expect(audio.lastPlayedURL != nil)
         _ = viewModel
     }
 
@@ -175,7 +188,7 @@ struct ThresholdAlertTests {
         try await Task.sleep(for: .milliseconds(200))
 
         #expect(audio.playCount == 1)
-        #expect(audio.lastPlayedSound == "sheep")
+        #expect(audio.lastPlayedURL?.lastPathComponent == "sheep.mp3")
         _ = viewModel
     }
 }

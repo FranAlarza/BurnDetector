@@ -65,4 +65,19 @@ struct AppSettingsTests {
 
         #expect(settings.selectedSound == "scream")
     }
+
+    @Test
+    func validateBundledSoundExists() {
+        #expect(AppSettings.validate(selectedSound: "scream") == true)
+    }
+
+    @Test
+    func validateBundledSoundMissing() {
+        #expect(AppSettings.validate(selectedSound: "nonexistent") == false)
+    }
+
+    @Test
+    func validateCustomSoundMissingOnDisk() {
+        #expect(AppSettings.validate(selectedSound: "/nonexistent/path/sound.mp3") == false)
+    }
 }
