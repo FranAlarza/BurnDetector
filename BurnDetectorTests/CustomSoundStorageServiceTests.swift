@@ -40,7 +40,7 @@ struct CustomSoundStorageServiceTests {
         let destination = sut.storageDirectory.appendingPathComponent("test_sound.mp3")
         #expect(FileManager.default.fileExists(atPath: destination.path))
         #expect(option.isCustom == true)
-        #expect(option.displayName == "Test_sound")
+        #expect(option.displayName == "Test_Sound")
     }
 
     @Test

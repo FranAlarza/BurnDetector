@@ -77,9 +77,9 @@ final class MenuBarViewModel {
             if !hasExceededThreshold && settings.soundEnabled {
                 hasExceededThreshold = true
                 let allSounds = SoundOption.all(using: storageService)
-                guard let sound = allSounds.first(where: { $0.id == settings.selectedSound }),
+                guard let sound = allSounds.first(where: { $0.id == self.settings.selectedSound }),
                       let url = sound.url else {
-                    logger.warning("Could not resolve URL for sound '\(settings.selectedSound)', skipping playback")
+                    logger.warning("Could not resolve URL for sound '\(self.settings.selectedSound)', skipping playback")
                     return
                 }
                 await audioPlayer.playSound(url: url)

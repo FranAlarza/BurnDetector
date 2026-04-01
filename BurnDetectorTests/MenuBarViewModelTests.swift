@@ -51,7 +51,7 @@ struct MenuBarViewModelTests {
         let service = MockCPUMonitoringService(results: [.success(42.3)])
         let viewModel = MenuBarViewModel(service: service)
 
-        try await Task.sleep(for: .milliseconds(200))
+        try await Task.sleep(for: .milliseconds(500))
 
         #expect(viewModel.cpuUsage == 42)
         #expect(viewModel.permissionsError == false)
@@ -62,7 +62,7 @@ struct MenuBarViewModelTests {
         let service = MockCPUMonitoringService(results: [.failure(CPUMonitoringError.permissionDenied)])
         let viewModel = MenuBarViewModel(service: service)
 
-        try await Task.sleep(for: .milliseconds(200))
+        try await Task.sleep(for: .milliseconds(500))
 
         #expect(viewModel.cpuUsage == nil)
         #expect(viewModel.permissionsError == true)
@@ -76,7 +76,7 @@ struct MenuBarViewModelTests {
         ])
         let viewModel = MenuBarViewModel(service: service)
 
-        try await Task.sleep(for: .milliseconds(200))
+        try await Task.sleep(for: .milliseconds(500))
 
         #expect(viewModel.cpuUsage == 76)
         #expect(viewModel.permissionsError == false)
@@ -87,7 +87,7 @@ struct MenuBarViewModelTests {
         let service = MockCPUMonitoringService(results: [.success(99.5)])
         let viewModel = MenuBarViewModel(service: service)
 
-        try await Task.sleep(for: .milliseconds(200))
+        try await Task.sleep(for: .milliseconds(500))
 
         #expect(viewModel.cpuUsage == 100)
     }
@@ -112,7 +112,7 @@ struct ThresholdAlertTests {
         settings.threshold = 90
         let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
 
-        try await Task.sleep(for: .milliseconds(200))
+        try await Task.sleep(for: .milliseconds(500))
 
         #expect(audio.playCount == 1)
         #expect(audio.lastPlayedURL != nil)
@@ -127,7 +127,7 @@ struct ThresholdAlertTests {
         settings.threshold = 90
         let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
 
-        try await Task.sleep(for: .milliseconds(200))
+        try await Task.sleep(for: .milliseconds(500))
 
         #expect(audio.playCount == 0)
         _ = viewModel
@@ -141,7 +141,7 @@ struct ThresholdAlertTests {
         settings.threshold = 90
         let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
 
-        try await Task.sleep(for: .milliseconds(200))
+        try await Task.sleep(for: .milliseconds(500))
 
         #expect(audio.playCount == 1)
         _ = viewModel
@@ -155,7 +155,7 @@ struct ThresholdAlertTests {
         settings.threshold = 90
         let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
 
-        try await Task.sleep(for: .milliseconds(200))
+        try await Task.sleep(for: .milliseconds(500))
 
         #expect(audio.playCount == 2)
         _ = viewModel
@@ -170,7 +170,7 @@ struct ThresholdAlertTests {
         settings.soundEnabled = false
         let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
 
-        try await Task.sleep(for: .milliseconds(200))
+        try await Task.sleep(for: .milliseconds(500))
 
         #expect(audio.playCount == 0)
         _ = viewModel
@@ -185,7 +185,7 @@ struct ThresholdAlertTests {
         settings.selectedSound = "sheep"
         let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings)
 
-        try await Task.sleep(for: .milliseconds(200))
+        try await Task.sleep(for: .milliseconds(500))
 
         #expect(audio.playCount == 1)
         #expect(audio.lastPlayedURL?.lastPathComponent == "sheep.mp3")

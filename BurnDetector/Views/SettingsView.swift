@@ -86,7 +86,7 @@ struct SettingsView: View {
             ForEach(soundOptions) { option in
                 HStack {
                     Image(systemName: settings.selectedSound == option.id ? "checkmark.circle.fill" : "circle")
-                        .foregroundStyle(settings.selectedSound == option.id ? .accentColor : .secondary)
+                        .foregroundStyle(settings.selectedSound == option.id ? Color.accentColor : Color.secondary)
 
                     Text(option.displayName)
                         .frame(maxWidth: .infinity, alignment: .leading)
