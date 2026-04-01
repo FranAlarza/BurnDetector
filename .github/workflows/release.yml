@@ -86,13 +86,19 @@ jobs:
             -exportOptionsPlist scripts/export-options.plist
 
       # ── Notarize ──────────────────────────────────────────────
+      - name: Zip app for notarization
+        run: |
+          ditto -c -k --keepParent \
+            "$EXPORT_PATH/$APP_NAME.app" \
+            "$EXPORT_PATH/$APP_NAME.zip"
+
       - name: Notarize app
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
         run: |
-          OUTPUT=$(xcrun notarytool submit "$EXPORT_PATH/$APP_NAME.app" \
+          OUTPUT=$(xcrun notarytool submit "$EXPORT_PATH/$APP_NAME.zip" \
             --apple-id "$APPLE_ID" \
             --team-id "$APPLE_TEAM_ID" \
             --password "$APPLE_APP_PASSWORD" \
