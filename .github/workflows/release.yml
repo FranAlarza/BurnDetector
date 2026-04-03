@@ -32,24 +32,31 @@ jobs:
           echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
           echo "BUILD_NUMBER=$(git rev-list --count HEAD)" >> $GITHUB_ENV
 
-      # ── Import certificate ────────────────────────────────────
-      - name: Import signing certificate
+      # ── Import certificates ───────────────────────────────────
+      - name: Import signing certificates
         env:
           APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_INSTALLER_CERTIFICATE_BASE64: ${{ secrets.APPLE_INSTALLER_CERTIFICATE_BASE64 }}
+          APPLE_INSTALLER_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_INSTALLER_CERTIFICATE_PASSWORD }}
         run: |
-          CERT_PATH=$RUNNER_TEMP/certificate.p12
+          APP_CERT_PATH=$RUNNER_TEMP/app-certificate.p12
+          INST_CERT_PATH=$RUNNER_TEMP/installer-certificate.p12
           KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain-db
           KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
 
-          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$CERT_PATH"
+          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$APP_CERT_PATH"
+          echo "$APPLE_INSTALLER_CERTIFICATE_BASE64" | base64 --decode > "$INST_CERT_PATH"
 
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
-          security import "$CERT_PATH" \
+          security import "$APP_CERT_PATH" \
             -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security import "$INST_CERT_PATH" \
+            -P "$APPLE_INSTALLER_CERTIFICATE_PASSWORD" \
             -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
 
           security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
@@ -113,16 +120,59 @@ jobs:
       - name: Staple notarization ticket
         run: xcrun stapler staple "$EXPORT_PATH/$APP_NAME.app"
 
-      # ── Build PKG (con .app notarizada dentro) ────────────────
+      # ── Build & sign PKG ──────────────────────────────────────
       - name: Build PKG
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          PKG_UNSIGNED="build/${APP_NAME}-${VERSION}-unsigned.pkg"
+          PKG_SIGNED="build/${APP_NAME}-${VERSION}.pkg"
+
           pkgbuild \
             --root "$EXPORT_PATH" \
             --install-location /Applications \
             --scripts scripts/pkg-scripts \
             --identifier "com.aweapps.Asado" \
             --version "$VERSION" \
-            "build/${APP_NAME}-${VERSION}.pkg"
+            "$PKG_UNSIGNED"
+
+          productsign \
+            --sign "Developer ID Installer: Fran Alarza ($APPLE_TEAM_ID)" \
+            "$PKG_UNSIGNED" \
+            "$PKG_SIGNED"
+
+      # ── Notarize PKG ──────────────────────────────────────────
+      - name: Notarize PKG
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          PKG_SIGNED="build/${APP_NAME}-${VERSION}.pkg"
+
+          OUTPUT=$(xcrun notarytool submit "$PKG_SIGNED" \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_PASSWORD" \
+            --wait 2>&1) || true
+
+          echo "$OUTPUT"
+
+          SUBMISSION_ID=$(echo "$OUTPUT" | grep -o '[0-9a-f\-]\{36\}' | head -1)
+
+          if echo "$OUTPUT" | grep -q "status: Accepted"; then
+            echo "Notarization accepted."
+          else
+            echo "Notarization failed. Fetching log..."
+            xcrun notarytool log "$SUBMISSION_ID" \
+              --apple-id "$APPLE_ID" \
+              --team-id "$APPLE_TEAM_ID" \
+              --password "$APPLE_APP_PASSWORD" || true
+            exit 1
+          fi
+
+      - name: Staple PKG
+        run: xcrun stapler staple "build/${APP_NAME}-${VERSION}.pkg"
 
       # ── GitHub Release ────────────────────────────────────────
       - name: Create GitHub Release
