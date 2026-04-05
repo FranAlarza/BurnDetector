@@ -5,6 +5,7 @@
 //  Created by Fran Alarza on 31/3/26.
 //
 
+import AppKit
 import Foundation
 import os
 
@@ -31,6 +32,8 @@ final class MenuBarViewModel {
     private let interval: TimeInterval
     private var monitoringTask: Task<Void, Never>?
     private var diskMonitoringTask: Task<Void, Never>?
+    private var updateCheckTask: Task<Void, Never>?
+    private var wakeObserverTask: Task<Void, Never>?
     private var hasExceededThreshold = false
     private var hasDiskExceededThreshold = false
     private let logger = Logger(subsystem: "com.aweapps.Asado", category: "MenuBarViewModel")
@@ -47,6 +50,7 @@ final class MenuBarViewModel {
         processService: ProcessMonitoringServiceProtocol = ProcessMonitoringService(),
         diskService: DiskMonitoringServiceProtocol = DiskMonitoringService(),
         updateChecker: UpdateCheckerServiceProtocol = UpdateCheckerService(),
+        updateCheckInterval: TimeInterval = 4 * 3600,
         interval: TimeInterval = 5.0,
         diskInterval: TimeInterval = 60.0
     ) {
@@ -60,12 +64,15 @@ final class MenuBarViewModel {
         self.interval = interval
         startMonitoring()
         startDiskMonitoring(interval: diskInterval)
-        Task { await checkForUpdates() }
+        startUpdateChecking(interval: updateCheckInterval)
+        startWakeObserver()
     }
 
     deinit {
         monitoringTask?.cancel()
         diskMonitoringTask?.cancel()
+        updateCheckTask?.cancel()
+        wakeObserverTask?.cancel()
     }
 
     // MARK: - Computed
@@ -111,6 +118,28 @@ private extension MenuBarViewModel {
                 guard !Task.isCancelled else { break }
                 self.freeDiskSpaceGB = self.diskService.freeDiskSpaceGB()
                 await self.checkDiskThreshold()
+            }
+        }
+    }
+
+    func startUpdateChecking(interval: TimeInterval) {
+        updateCheckTask = Task { [weak self] in
+            guard let self else { return }
+            await self.checkForUpdates()
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(interval), clock: .continuous)
+                guard !Task.isCancelled else { break }
+                await self.checkForUpdates()
+            }
+        }
+    }
+
+    func startWakeObserver() {
+        wakeObserverTask = Task { [weak self] in
+            guard let self else { return }
+            for await _ in NSWorkspace.shared.notificationCenter.notifications(named: NSWorkspace.didWakeNotification) {
+                guard !Task.isCancelled else { break }
+                await self.checkForUpdates()
             }
         }
     }
