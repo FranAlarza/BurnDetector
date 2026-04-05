@@ -395,6 +395,60 @@ struct DiskLabelTests {
     }
 }
 
+// MARK: - Mock Counting Update Checker
+
+final class MockCountingUpdateCheckerService: UpdateCheckerServiceProtocol, @unchecked Sendable {
+    private var callCount = 0
+    private let responses: [String?]
+
+    init(responses: [String?]) {
+        self.responses = responses
+    }
+
+    func fetchLatestVersion() async -> String? {
+        let index = min(callCount, responses.count - 1)
+        callCount += 1
+        return responses[index]
+    }
+}
+
+// MARK: - Periodic Update Check Tests
+
+struct PeriodicUpdateCheckTests {
+
+    @Test @MainActor
+    func periodicCheckFiresAgainAfterInterval() async throws {
+        let checker = MockCountingUpdateCheckerService(responses: [nil, "99.0.0"])
+        let viewModel = MenuBarViewModel(
+            service: MockCPUMonitoringService(results: []),
+            processService: MockProcessMonitoringService(processes: []),
+            diskService: MockDiskMonitoringService(value: nil),
+            updateChecker: checker,
+            updateCheckInterval: 0.1
+        )
+
+        try await Task.sleep(for: .milliseconds(400))
+
+        #expect(viewModel.isUpdateAvailable == true)
+    }
+
+    @Test @MainActor
+    func networkFailureDoesNotResetIsUpdateAvailable() async throws {
+        let checker = MockCountingUpdateCheckerService(responses: ["99.0.0", nil])
+        let viewModel = MenuBarViewModel(
+            service: MockCPUMonitoringService(results: []),
+            processService: MockProcessMonitoringService(processes: []),
+            diskService: MockDiskMonitoringService(value: nil),
+            updateChecker: checker,
+            updateCheckInterval: 0.1
+        )
+
+        try await Task.sleep(for: .milliseconds(400))
+
+        #expect(viewModel.isUpdateAvailable == true)
+    }
+}
+
 // MARK: - Update Checker Tests
 
 struct UpdateCheckerTests {
