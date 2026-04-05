@@ -9,7 +9,6 @@ import Foundation
 import os
 
 @Observable
-@MainActor
 final class MenuBarViewModel {
 
     // MARK: - Published State
@@ -30,8 +29,8 @@ final class MenuBarViewModel {
     private let diskService: DiskMonitoringServiceProtocol
     private let updateChecker: UpdateCheckerServiceProtocol
     private let interval: TimeInterval
-    private nonisolated(unsafe) var monitoringTask: Task<Void, Never>?
-    private nonisolated(unsafe) var diskMonitoringTask: Task<Void, Never>?
+    private var monitoringTask: Task<Void, Never>?
+    private var diskMonitoringTask: Task<Void, Never>?
     private var hasExceededThreshold = false
     private var hasDiskExceededThreshold = false
     private let logger = Logger(subsystem: "com.aweapps.Asado", category: "MenuBarViewModel")
@@ -75,10 +74,12 @@ final class MenuBarViewModel {
         guard let gb = freeDiskSpaceGB else { return "Free: -- GB" }
         return String(format: "Free: %.1f GB", gb)
     }
+}
 
-    // MARK: - Private Methods
-
-    private func startMonitoring() {
+// MARK: - Private Methods
+private extension MenuBarViewModel {
+    
+    func startMonitoring() {
         monitoringTask = Task { [weak self] in
             guard let self else { return }
             let stream = service.cpuUsageStream(interval: interval)
@@ -100,7 +101,7 @@ final class MenuBarViewModel {
         }
     }
 
-    private func startDiskMonitoring(interval: TimeInterval) {
+    func startDiskMonitoring(interval: TimeInterval) {
         freeDiskSpaceGB = diskService.freeDiskSpaceGB()
         diskMonitoringTask = Task { [weak self] in
             guard let self else { return }
@@ -114,7 +115,7 @@ final class MenuBarViewModel {
         }
     }
 
-    private func checkForUpdates() async {
+    func checkForUpdates() async {
         logger.info("Checking for updates...")
         guard let latest = await updateChecker.fetchLatestVersion() else {
             logger.warning("Update check failed: could not fetch latest version")
@@ -133,7 +134,7 @@ final class MenuBarViewModel {
         isUpdateAvailable = newer
     }
 
-    private func isNewer(_ latest: String, than current: String) -> Bool {
+    func isNewer(_ latest: String, than current: String) -> Bool {
         let l = latest.split(separator: ".").compactMap { Int($0) }
         let c = current.split(separator: ".").compactMap { Int($0) }
         for (lv, cv) in zip(l, c) {
@@ -142,7 +143,7 @@ final class MenuBarViewModel {
         return l.count > c.count
     }
 
-    private func checkThreshold(cpuUsage: Int) async {
+    func checkThreshold(cpuUsage: Int) async {
         if cpuUsage >= settings.threshold {
             if !hasExceededThreshold && settings.soundEnabled {
                 hasExceededThreshold = true
@@ -159,7 +160,7 @@ final class MenuBarViewModel {
         }
     }
 
-    private func checkDiskThreshold() async {
+    func checkDiskThreshold() async {
         guard let freeGB = freeDiskSpaceGB else { return }
         if freeGB < Double(settings.diskThresholdGB) {
             if !hasDiskExceededThreshold && settings.diskSoundEnabled {

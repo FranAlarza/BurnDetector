@@ -8,6 +8,7 @@
 import SwiftUI
 
 @main
+@MainActor
 struct AsadoApp: App {
     @State private var viewModel = MenuBarViewModel()
 

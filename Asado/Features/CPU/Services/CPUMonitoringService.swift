@@ -23,7 +23,6 @@ enum CPUMonitoringError: Error, LocalizedError {
 }
 
 // MARK: - Implementation
-
 final class CPUMonitoringService: CPUMonitoringServiceProtocol {
 
     func cpuUsageStream(interval: TimeInterval) -> AsyncStream<Result<Double, Error>> {

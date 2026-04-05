@@ -25,8 +25,11 @@ struct MetricCardView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
+            Spacer(minLength: 0)
         }
-        .padding()
+        .padding(.horizontal, 8)
+        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity)
         .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
     }
 }
