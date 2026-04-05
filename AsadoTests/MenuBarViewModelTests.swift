@@ -39,6 +39,13 @@ struct MockProcessMonitoringService: ProcessMonitoringServiceProtocol {
     }
 }
 
+// MARK: - Mock Disk Service
+
+struct MockDiskMonitoringService: DiskMonitoringServiceProtocol {
+    let value: Double?
+    func freeDiskSpaceGB() -> Double? { value }
+}
+
 // MARK: - Mock Storage Service
 
 struct MockCustomSoundStorageService: CustomSoundStorageServiceProtocol {
@@ -59,7 +66,7 @@ struct MenuBarViewModelTests {
     @Test @MainActor
     func successUpdatesUsage() async throws {
         let service = MockCPUMonitoringService(results: [.success(42.3)])
-        let viewModel = MenuBarViewModel(service: service, processService: MockProcessMonitoringService(processes: []))
+        let viewModel = MenuBarViewModel(service: service, processService: MockProcessMonitoringService(processes: []), diskService: MockDiskMonitoringService(value: nil))
 
         try await Task.sleep(for: .milliseconds(500))
 
@@ -70,7 +77,7 @@ struct MenuBarViewModelTests {
     @Test @MainActor
     func failureSetsPermissionsError() async throws {
         let service = MockCPUMonitoringService(results: [.failure(CPUMonitoringError.permissionDenied)])
-        let viewModel = MenuBarViewModel(service: service, processService: MockProcessMonitoringService(processes: []))
+        let viewModel = MenuBarViewModel(service: service, processService: MockProcessMonitoringService(processes: []), diskService: MockDiskMonitoringService(value: nil))
 
         try await Task.sleep(for: .milliseconds(500))
 
@@ -84,7 +91,7 @@ struct MenuBarViewModelTests {
             .failure(CPUMonitoringError.permissionDenied),
             .success(75.6)
         ])
-        let viewModel = MenuBarViewModel(service: service, processService: MockProcessMonitoringService(processes: []))
+        let viewModel = MenuBarViewModel(service: service, processService: MockProcessMonitoringService(processes: []), diskService: MockDiskMonitoringService(value: nil))
 
         try await Task.sleep(for: .milliseconds(500))
 
@@ -95,7 +102,7 @@ struct MenuBarViewModelTests {
     @Test @MainActor
     func usageRoundsToNearestInt() async throws {
         let service = MockCPUMonitoringService(results: [.success(99.5)])
-        let viewModel = MenuBarViewModel(service: service, processService: MockProcessMonitoringService(processes: []))
+        let viewModel = MenuBarViewModel(service: service, processService: MockProcessMonitoringService(processes: []), diskService: MockDiskMonitoringService(value: nil))
 
         try await Task.sleep(for: .milliseconds(500))
 
@@ -120,7 +127,7 @@ struct ThresholdAlertTests {
         let service = MockCPUMonitoringService(results: [.success(95.0)])
         let settings = AppSettings()
         settings.threshold = 90
-        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings, processService: MockProcessMonitoringService(processes: []))
+        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings, processService: MockProcessMonitoringService(processes: []), diskService: MockDiskMonitoringService(value: nil))
 
         try await Task.sleep(for: .milliseconds(500))
 
@@ -135,7 +142,7 @@ struct ThresholdAlertTests {
         let service = MockCPUMonitoringService(results: [.success(50.0)])
         let settings = AppSettings()
         settings.threshold = 90
-        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings, processService: MockProcessMonitoringService(processes: []))
+        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings, processService: MockProcessMonitoringService(processes: []), diskService: MockDiskMonitoringService(value: nil))
 
         try await Task.sleep(for: .milliseconds(500))
 
@@ -149,7 +156,7 @@ struct ThresholdAlertTests {
         let service = MockCPUMonitoringService(results: [.success(95.0), .success(97.0), .success(92.0)])
         let settings = AppSettings()
         settings.threshold = 90
-        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings, processService: MockProcessMonitoringService(processes: []))
+        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings, processService: MockProcessMonitoringService(processes: []), diskService: MockDiskMonitoringService(value: nil))
 
         try await Task.sleep(for: .milliseconds(500))
 
@@ -163,7 +170,7 @@ struct ThresholdAlertTests {
         let service = MockCPUMonitoringService(results: [.success(95.0), .success(80.0), .success(95.0)])
         let settings = AppSettings()
         settings.threshold = 90
-        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings, processService: MockProcessMonitoringService(processes: []))
+        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings, processService: MockProcessMonitoringService(processes: []), diskService: MockDiskMonitoringService(value: nil))
 
         try await Task.sleep(for: .milliseconds(500))
 
@@ -178,7 +185,7 @@ struct ThresholdAlertTests {
         let settings = AppSettings()
         settings.threshold = 90
         settings.soundEnabled = false
-        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings, processService: MockProcessMonitoringService(processes: []))
+        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings, processService: MockProcessMonitoringService(processes: []), diskService: MockDiskMonitoringService(value: nil))
 
         try await Task.sleep(for: .milliseconds(500))
 
@@ -193,7 +200,7 @@ struct ThresholdAlertTests {
         let settings = AppSettings()
         settings.threshold = 90
         settings.selectedSound = "sheep"
-        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings, processService: MockProcessMonitoringService(processes: []))
+        let viewModel = MenuBarViewModel(service: service, audioPlayer: audio, settings: settings, processService: MockProcessMonitoringService(processes: []), diskService: MockDiskMonitoringService(value: nil))
 
         try await Task.sleep(for: .milliseconds(500))
 
@@ -225,7 +232,7 @@ struct TopProcessTests {
         let cpuService = MockCPUMonitoringService(results: [.success(95.0)])
         let settings = AppSettings()
         settings.threshold = 90
-        let viewModel = MenuBarViewModel(service: cpuService, audioPlayer: MockAudioPlayerService(), settings: settings, processService: processService)
+        let viewModel = MenuBarViewModel(service: cpuService, audioPlayer: MockAudioPlayerService(), settings: settings, processService: processService, diskService: MockDiskMonitoringService(value: nil))
 
         try await Task.sleep(for: .milliseconds(500))
 
@@ -243,11 +250,38 @@ struct TopProcessTests {
         let cpuService = MockCPUMonitoringService(results: [.success(95.0), .success(20.0)])
         let settings = AppSettings()
         settings.threshold = 90
-        let viewModel = MenuBarViewModel(service: cpuService, audioPlayer: MockAudioPlayerService(), settings: settings, processService: processService)
+        let viewModel = MenuBarViewModel(service: cpuService, audioPlayer: MockAudioPlayerService(), settings: settings, processService: processService, diskService: MockDiskMonitoringService(value: nil))
 
         try await Task.sleep(for: .milliseconds(500))
 
         #expect(viewModel.topProcesses.count == 1)
         _ = viewModel
+    }
+}
+
+// MARK: - Disk Tests
+
+struct DiskLabelTests {
+
+    @Test @MainActor
+    func diskValueLabelShowsFormattedGB() {
+        let viewModel = MenuBarViewModel(
+            service: MockCPUMonitoringService(results: []),
+            processService: MockProcessMonitoringService(processes: []),
+            diskService: MockDiskMonitoringService(value: 128.0)
+        )
+
+        #expect(viewModel.diskValueLabel == "Free: 128.0 GB")
+    }
+
+    @Test @MainActor
+    func diskValueLabelShowsFallbackWhenNil() {
+        let viewModel = MenuBarViewModel(
+            service: MockCPUMonitoringService(results: []),
+            processService: MockProcessMonitoringService(processes: []),
+            diskService: MockDiskMonitoringService(value: nil)
+        )
+
+        #expect(viewModel.diskValueLabel == "Free: -- GB")
     }
 }
