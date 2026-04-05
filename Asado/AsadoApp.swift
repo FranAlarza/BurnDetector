@@ -17,7 +17,6 @@ struct AsadoApp: App {
         } label: {
             HStack(spacing: 4) {
                 Image(systemName: "flame.fill")
-                    .foregroundStyle(cpuColor)
                 Text(cpuLabel)
                     .font(.system(size: 12, weight: .medium, design: .monospaced))
             }
@@ -34,14 +33,5 @@ struct AsadoApp: App {
     private var cpuLabel: String {
         guard let usage = viewModel.cpuUsage else { return "--%"}
         return "\(usage)%"
-    }
-
-    private var cpuColor: Color {
-        guard let usage = viewModel.cpuUsage else { return .secondary }
-        switch usage {
-        case 0..<50: return .green
-        case 50..<80: return .orange
-        default: return .red
-        }
     }
 }
