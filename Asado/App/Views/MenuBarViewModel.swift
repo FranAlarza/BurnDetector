@@ -97,9 +97,22 @@ final class MenuBarViewModel {
     }
 
     private func checkForUpdates() async {
-        guard let latest = await updateChecker.fetchLatestVersion(),
-              let current = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String else { return }
-        isUpdateAvailable = isNewer(latest, than: current)
+        logger.info("Checking for updates...")
+        guard let latest = await updateChecker.fetchLatestVersion() else {
+            logger.warning("Update check failed: could not fetch latest version")
+            return
+        }
+        guard let current = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String else {
+            logger.warning("Update check failed: could not read current version from bundle")
+            return
+        }
+        let newer = isNewer(latest, than: current)
+        if newer {
+            logger.info("Update available: \(current) → \(latest)")
+        } else {
+            logger.info("App is up to date (current: \(current), latest: \(latest))")
+        }
+        isUpdateAvailable = newer
     }
 
     private func isNewer(_ latest: String, than current: String) -> Bool {
