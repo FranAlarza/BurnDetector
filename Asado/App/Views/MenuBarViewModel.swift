@@ -33,6 +33,7 @@ final class MenuBarViewModel {
     private nonisolated(unsafe) var monitoringTask: Task<Void, Never>?
     private nonisolated(unsafe) var diskMonitoringTask: Task<Void, Never>?
     private var hasExceededThreshold = false
+    private var hasDiskExceededThreshold = false
     private let logger = Logger(subsystem: "com.aweapps.Asado", category: "MenuBarViewModel")
 
     let releasesURL = URL(string: "https://github.com/FranAlarza/Asado/releases/latest")!
@@ -103,10 +104,12 @@ final class MenuBarViewModel {
         freeDiskSpaceGB = diskService.freeDiskSpaceGB()
         diskMonitoringTask = Task { [weak self] in
             guard let self else { return }
+            await self.checkDiskThreshold()
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(interval))
                 guard !Task.isCancelled else { break }
                 self.freeDiskSpaceGB = self.diskService.freeDiskSpaceGB()
+                await self.checkDiskThreshold()
             }
         }
     }
@@ -153,6 +156,24 @@ final class MenuBarViewModel {
             }
         } else {
             hasExceededThreshold = false
+        }
+    }
+
+    private func checkDiskThreshold() async {
+        guard let freeGB = freeDiskSpaceGB else { return }
+        if freeGB < Double(settings.diskThresholdGB) {
+            if !hasDiskExceededThreshold && settings.diskSoundEnabled {
+                hasDiskExceededThreshold = true
+                let allSounds = SoundOption.all(using: storageService)
+                guard let sound = allSounds.first(where: { $0.id == self.settings.diskSelectedSound }),
+                      let url = sound.url else {
+                    logger.warning("Could not resolve URL for disk sound '\(self.settings.diskSelectedSound)', skipping playback")
+                    return
+                }
+                await audioPlayer.playSound(url: url)
+            }
+        } else {
+            hasDiskExceededThreshold = false
         }
     }
 }
