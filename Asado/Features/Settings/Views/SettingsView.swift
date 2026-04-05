@@ -69,7 +69,7 @@ struct SettingsView: View {
                     storageService: storageService
                 )
             case .disk:
-                DiskSettingsView()
+                DiskSettingsView(settings: settings, audioPlayer: audioPlayer, storageService: storageService)
             }
         }
         .frame(width: 560, height: 380)
