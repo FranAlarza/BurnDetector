@@ -17,6 +17,7 @@ final class MenuBarViewModel {
     private(set) var cpuUsage: Int?
     private(set) var permissionsError = false
     private(set) var topProcesses: [TopProcess] = []
+    private(set) var freeDiskSpaceGB: Double?
     var settings: AppSettings
 
     // MARK: - Private
@@ -25,6 +26,7 @@ final class MenuBarViewModel {
     private let audioPlayer: AudioPlayerServiceProtocol
     private let storageService: CustomSoundStorageServiceProtocol
     private let processService: ProcessMonitoringServiceProtocol
+    private let diskService: DiskMonitoringServiceProtocol
     private let interval: TimeInterval
     private nonisolated(unsafe) var monitoringTask: Task<Void, Never>?
     private var hasExceededThreshold = false
@@ -38,6 +40,7 @@ final class MenuBarViewModel {
         settings: AppSettings = AppSettings(),
         storageService: CustomSoundStorageServiceProtocol = CustomSoundStorageService(),
         processService: ProcessMonitoringServiceProtocol = ProcessMonitoringService(),
+        diskService: DiskMonitoringServiceProtocol = DiskMonitoringService(),
         interval: TimeInterval = 5.0
     ) {
         self.service = service
@@ -45,12 +48,21 @@ final class MenuBarViewModel {
         self.settings = settings
         self.storageService = storageService
         self.processService = processService
+        self.diskService = diskService
         self.interval = interval
         startMonitoring()
+        self.freeDiskSpaceGB = diskService.freeDiskSpaceGB()
     }
 
     deinit {
         monitoringTask?.cancel()
+    }
+
+    // MARK: - Computed
+
+    var diskValueLabel: String {
+        guard let gb = freeDiskSpaceGB else { return "Free: -- GB" }
+        return String(format: "Free: %.1f GB", gb)
     }
 
     // MARK: - Private Methods
