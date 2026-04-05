@@ -13,10 +13,9 @@ struct MetricCardView: View {
     let value: String
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: 8) {
             Image(systemName: systemImage)
-                .font(.system(size: 28))
-                .frame(width: 36)
+                .font(.system(size: 16))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
@@ -26,8 +25,6 @@ struct MetricCardView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
-
-            Spacer()
         }
         .padding()
         .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))

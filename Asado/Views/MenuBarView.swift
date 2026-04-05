@@ -41,6 +41,7 @@ struct MenuBarView: View {
                 )
                 .gridCellColumns(2)
             }
+            .padding(0)
 
             // MARK: Footer
             Divider()
@@ -50,7 +51,7 @@ struct MenuBarView: View {
             }
         }
         .padding()
-        .frame(width: 280)
+        .frame(width: 320)
     }
 
     // MARK: - Private
