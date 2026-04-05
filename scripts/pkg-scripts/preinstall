@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if pgrep -x "Asado" > /dev/null; then
+    osascript -e 'quit app "Asado"'
+    for i in {1..5}; do
+        sleep 1
+        pgrep -x "Asado" > /dev/null || break
+    done
+    pkill -x "Asado" 2>/dev/null || true
+fi
+
+exit 0
