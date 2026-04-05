@@ -266,7 +266,107 @@ struct TopProcessTests {
     }
 }
 
-// MARK: - Disk Tests
+// MARK: - Disk Alert Tests
+
+@Suite(.serialized)
+struct DiskAlertTests {
+
+    init() {
+        UserDefaults.standard.removeObject(forKey: "cpuThreshold")
+        UserDefaults.standard.removeObject(forKey: "soundEnabled")
+        UserDefaults.standard.removeObject(forKey: "selectedSound")
+        UserDefaults.standard.removeObject(forKey: "diskThresholdGB")
+        UserDefaults.standard.removeObject(forKey: "diskSoundEnabled")
+        UserDefaults.standard.removeObject(forKey: "diskSelectedSound")
+    }
+
+    @Test @MainActor
+    func diskSoundPlaysWhenFreeBelowThreshold() async throws {
+        let audio = MockAudioPlayerService()
+        let settings = AppSettings()
+        settings.diskThresholdGB = 50
+        let viewModel = MenuBarViewModel(
+            service: MockCPUMonitoringService(results: []),
+            audioPlayer: audio,
+            settings: settings,
+            processService: MockProcessMonitoringService(processes: []),
+            diskService: MockDiskMonitoringService(value: 30.0),
+            updateChecker: MockUpdateCheckerService(version: nil),
+            diskInterval: 3600
+        )
+
+        try await Task.sleep(for: .milliseconds(500))
+
+        #expect(audio.playCount == 1)
+        _ = viewModel
+    }
+
+    @Test @MainActor
+    func diskSoundDoesNotPlayWhenFreeAboveThreshold() async throws {
+        let audio = MockAudioPlayerService()
+        let settings = AppSettings()
+        settings.diskThresholdGB = 50
+        let viewModel = MenuBarViewModel(
+            service: MockCPUMonitoringService(results: []),
+            audioPlayer: audio,
+            settings: settings,
+            processService: MockProcessMonitoringService(processes: []),
+            diskService: MockDiskMonitoringService(value: 80.0),
+            updateChecker: MockUpdateCheckerService(version: nil),
+            diskInterval: 3600
+        )
+
+        try await Task.sleep(for: .milliseconds(500))
+
+        #expect(audio.playCount == 0)
+        _ = viewModel
+    }
+
+    @Test @MainActor
+    func diskSoundDoesNotPlayWhenDisabled() async throws {
+        let audio = MockAudioPlayerService()
+        let settings = AppSettings()
+        settings.diskThresholdGB = 50
+        settings.diskSoundEnabled = false
+        let viewModel = MenuBarViewModel(
+            service: MockCPUMonitoringService(results: []),
+            audioPlayer: audio,
+            settings: settings,
+            processService: MockProcessMonitoringService(processes: []),
+            diskService: MockDiskMonitoringService(value: 30.0),
+            updateChecker: MockUpdateCheckerService(version: nil),
+            diskInterval: 3600
+        )
+
+        try await Task.sleep(for: .milliseconds(500))
+
+        #expect(audio.playCount == 0)
+        _ = viewModel
+    }
+
+    @Test @MainActor
+    func diskSoundDoesNotRepeatWhileStillBelow() async throws {
+        let audio = MockAudioPlayerService()
+        let settings = AppSettings()
+        settings.diskThresholdGB = 50
+        let viewModel = MenuBarViewModel(
+            service: MockCPUMonitoringService(results: []),
+            audioPlayer: audio,
+            settings: settings,
+            processService: MockProcessMonitoringService(processes: []),
+            diskService: MockDiskMonitoringService(value: 30.0),
+            updateChecker: MockUpdateCheckerService(version: nil),
+            diskInterval: 0.1
+        )
+
+        try await Task.sleep(for: .milliseconds(500))
+
+        #expect(audio.playCount == 1)
+        _ = viewModel
+    }
+}
+
+// MARK: - Disk Label Tests
 
 struct DiskLabelTests {
 
