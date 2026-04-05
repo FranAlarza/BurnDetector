@@ -31,6 +31,7 @@ final class MenuBarViewModel {
     private let updateChecker: UpdateCheckerServiceProtocol
     private let interval: TimeInterval
     private nonisolated(unsafe) var monitoringTask: Task<Void, Never>?
+    private nonisolated(unsafe) var diskMonitoringTask: Task<Void, Never>?
     private var hasExceededThreshold = false
     private let logger = Logger(subsystem: "com.aweapps.Asado", category: "MenuBarViewModel")
 
@@ -46,7 +47,8 @@ final class MenuBarViewModel {
         processService: ProcessMonitoringServiceProtocol = ProcessMonitoringService(),
         diskService: DiskMonitoringServiceProtocol = DiskMonitoringService(),
         updateChecker: UpdateCheckerServiceProtocol = UpdateCheckerService(),
-        interval: TimeInterval = 5.0
+        interval: TimeInterval = 5.0,
+        diskInterval: TimeInterval = 60.0
     ) {
         self.service = service
         self.audioPlayer = audioPlayer
@@ -57,12 +59,13 @@ final class MenuBarViewModel {
         self.updateChecker = updateChecker
         self.interval = interval
         startMonitoring()
-        self.freeDiskSpaceGB = diskService.freeDiskSpaceGB()
+        startDiskMonitoring(interval: diskInterval)
         Task { await checkForUpdates() }
     }
 
     deinit {
         monitoringTask?.cancel()
+        diskMonitoringTask?.cancel()
     }
 
     // MARK: - Computed
@@ -92,6 +95,18 @@ final class MenuBarViewModel {
                     self.cpuUsage = nil
                     self.permissionsError = true
                 }
+            }
+        }
+    }
+
+    private func startDiskMonitoring(interval: TimeInterval) {
+        freeDiskSpaceGB = diskService.freeDiskSpaceGB()
+        diskMonitoringTask = Task { [weak self] in
+            guard let self else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(interval))
+                guard !Task.isCancelled else { break }
+                self.freeDiskSpaceGB = self.diskService.freeDiskSpaceGB()
             }
         }
     }
