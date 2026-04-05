@@ -30,6 +30,7 @@ jobs:
       - name: Set version variables
         run: |
           echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+          echo "MARKETING_VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
           echo "BUILD_NUMBER=$(git rev-list --count HEAD)" >> $GITHUB_ENV
 
       # ── Import certificates ───────────────────────────────────
@@ -69,6 +70,7 @@ jobs:
             -scheme "$SCHEME" \
             -configuration Release \
             -archivePath "$ARCHIVE_PATH" \
+            MARKETING_VERSION="$MARKETING_VERSION" \
             CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Developer ID Application" \
