@@ -49,6 +49,16 @@ struct MenuBarView: View {
             // MARK: Footer
             Divider()
 
+            if viewModel.isUpdateAvailable {
+                Button {
+                    NSWorkspace.shared.open(viewModel.releasesURL)
+                } label: {
+                    Label("Update available", systemImage: "arrow.down.circle")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+            }
+
             Button("Quit") {
                 NSApplication.shared.terminate(nil)
             }

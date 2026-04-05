@@ -18,6 +18,7 @@ final class MenuBarViewModel {
     private(set) var permissionsError = false
     private(set) var topProcesses: [TopProcess] = []
     private(set) var freeDiskSpaceGB: Double?
+    private(set) var isUpdateAvailable = false
     var settings: AppSettings
 
     // MARK: - Private
@@ -27,10 +28,13 @@ final class MenuBarViewModel {
     private let storageService: CustomSoundStorageServiceProtocol
     private let processService: ProcessMonitoringServiceProtocol
     private let diskService: DiskMonitoringServiceProtocol
+    private let updateChecker: UpdateCheckerServiceProtocol
     private let interval: TimeInterval
     private nonisolated(unsafe) var monitoringTask: Task<Void, Never>?
     private var hasExceededThreshold = false
     private let logger = Logger(subsystem: "com.aweapps.Asado", category: "MenuBarViewModel")
+
+    let releasesURL = URL(string: "https://github.com/FranAlarza/Asado/releases/latest")!
 
     // MARK: - Init
 
@@ -41,6 +45,7 @@ final class MenuBarViewModel {
         storageService: CustomSoundStorageServiceProtocol = CustomSoundStorageService(),
         processService: ProcessMonitoringServiceProtocol = ProcessMonitoringService(),
         diskService: DiskMonitoringServiceProtocol = DiskMonitoringService(),
+        updateChecker: UpdateCheckerServiceProtocol = UpdateCheckerService(),
         interval: TimeInterval = 5.0
     ) {
         self.service = service
@@ -49,9 +54,11 @@ final class MenuBarViewModel {
         self.storageService = storageService
         self.processService = processService
         self.diskService = diskService
+        self.updateChecker = updateChecker
         self.interval = interval
         startMonitoring()
         self.freeDiskSpaceGB = diskService.freeDiskSpaceGB()
+        Task { await checkForUpdates() }
     }
 
     deinit {
@@ -87,6 +94,21 @@ final class MenuBarViewModel {
                 }
             }
         }
+    }
+
+    private func checkForUpdates() async {
+        guard let latest = await updateChecker.fetchLatestVersion(),
+              let current = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String else { return }
+        isUpdateAvailable = isNewer(latest, than: current)
+    }
+
+    private func isNewer(_ latest: String, than current: String) -> Bool {
+        let l = latest.split(separator: ".").compactMap { Int($0) }
+        let c = current.split(separator: ".").compactMap { Int($0) }
+        for (lv, cv) in zip(l, c) {
+            if lv != cv { return lv > cv }
+        }
+        return l.count > c.count
     }
 
     private func checkThreshold(cpuUsage: Int) async {
