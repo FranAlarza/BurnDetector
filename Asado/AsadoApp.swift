@@ -12,13 +12,36 @@ struct AsadoApp: App {
     @State private var viewModel = MenuBarViewModel()
 
     var body: some Scene {
-        MenuBarExtra("Asado", systemImage: "flame.fill") {
+        MenuBarExtra {
             MenuBarView(viewModel: viewModel)
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "flame.fill")
+                    .foregroundStyle(cpuColor)
+                Text(cpuLabel)
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+            }
         }
         .menuBarExtraStyle(.window)
 
         Settings {
             SettingsView(settings: viewModel.settings)
+        }
+    }
+
+    // MARK: - Private
+
+    private var cpuLabel: String {
+        guard let usage = viewModel.cpuUsage else { return "--%"}
+        return "\(usage)%"
+    }
+
+    private var cpuColor: Color {
+        guard let usage = viewModel.cpuUsage else { return .secondary }
+        switch usage {
+        case 0..<50: return .green
+        case 50..<80: return .orange
+        default: return .red
         }
     }
 }
