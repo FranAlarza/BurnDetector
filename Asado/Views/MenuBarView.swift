@@ -39,9 +39,12 @@ struct MenuBarView: View {
                     title: "CPU",
                     value: cpuValueLabel
                 )
-                .gridCellColumns(2)
+                MetricCardView(
+                    systemImage: "internaldrive",
+                    title: "Disk",
+                    value: viewModel.diskValueLabel
+                )
             }
-            .padding(0)
 
             // MARK: Footer
             Divider()
