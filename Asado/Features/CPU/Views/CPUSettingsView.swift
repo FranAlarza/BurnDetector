@@ -43,7 +43,9 @@ struct CPUSettingsView: View {
                         .font(.caption)
                         .foregroundStyle(.red)
                 }
-
+            }
+            
+            Section("Limits") {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("CPU Threshold: \(settings.threshold)%")
                     Slider(
