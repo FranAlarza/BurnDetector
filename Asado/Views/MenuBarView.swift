@@ -11,10 +11,13 @@ struct MenuBarView: View {
     @Bindable var viewModel: MenuBarViewModel
     @Environment(\.openSettings) private var openSettings
 
+    private let columns = [GridItem(.flexible()), GridItem(.flexible())]
+
     // MARK: - Body
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(spacing: 12) {
+            // MARK: Header
             HStack {
                 Text("Asado")
                     .font(.headline)
@@ -29,19 +32,17 @@ struct MenuBarView: View {
                 .buttonStyle(.plain)
             }
 
-            Text(cpuLabel)
-                .font(.body)
-                .foregroundStyle(.secondary)
-
-            if viewModel.permissionsError {
-                Text("Permissions required to read CPU usage")
-                    .font(.caption)
-                    .foregroundStyle(.red)
+            // MARK: Grid
+            LazyVGrid(columns: columns, spacing: 12) {
+                MetricCardView(
+                    systemImage: "cpu",
+                    title: "CPU",
+                    value: cpuValueLabel
+                )
+                .gridCellColumns(2)
             }
 
-            Divider()
-            processListSection
-
+            // MARK: Footer
             Divider()
 
             Button("Quit") {
@@ -49,53 +50,15 @@ struct MenuBarView: View {
             }
         }
         .padding()
-        .frame(width: 260)
-    }
-
-    // MARK: - Process List
-
-    private var processListSection: some View {
-        VStack(spacing: 4) {
-            ForEach(viewModel.topProcesses) { process in
-                HStack(spacing: 8) {
-                    processIcon(for: process)
-                        .frame(width: 16, height: 16)
-
-                    Text(process.name)
-                        .font(.caption)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                    Text(String(format: "%.1f%%", process.cpuUsage))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .monospacedDigit()
-                }
-            }
-        }
+        .frame(width: 280)
     }
 
     // MARK: - Private
 
-    @ViewBuilder
-    private func processIcon(for process: TopProcess) -> some View {
-        if let icon = process.icon {
-            Image(nsImage: icon)
-                .resizable()
-                .scaledToFit()
-        } else {
-            Image(systemName: "gearshape.fill")
-                .resizable()
-                .scaledToFit()
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    private var cpuLabel: String {
+    private var cpuValueLabel: String {
         if let usage = viewModel.cpuUsage {
-            return "CPU: \(usage)%"
+            return "Usage: \(usage)%"
         }
-        return "CPU: --%"
+        return "Usage: --%"
     }
 }
