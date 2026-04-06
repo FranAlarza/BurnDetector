@@ -10,8 +10,10 @@ import SwiftUI
 struct MenuBarView: View {
     @Bindable var viewModel: MenuBarViewModel
     @Environment(\.openSettings) private var openSettings
+    @State private var cpuWindowController = CPUProcessesWindowController()
 
     private let columns = [GridItem(.flexible()), GridItem(.flexible())]
+    private let storagePrefsURL = URL(string: "x-apple.systempreferences:com.apple.settings.Storage")!
 
     // MARK: - Body
 
@@ -37,12 +39,14 @@ struct MenuBarView: View {
                 MetricCardView(
                     systemImage: "cpu",
                     title: "CPU",
-                    value: cpuValueLabel
+                    value: cpuValueLabel,
+                    action: { cpuWindowController.show(viewModel: viewModel) }
                 )
                 MetricCardView(
                     systemImage: "internaldrive",
                     title: "Disk",
-                    value: viewModel.diskValueLabel
+                    value: viewModel.diskValueLabel,
+                    action: { NSWorkspace.shared.open(storagePrefsURL) }
                 )
             }
 
