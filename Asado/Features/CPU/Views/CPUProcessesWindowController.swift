@@ -30,6 +30,7 @@ final class CPUProcessesWindowController: NSObject, NSWindowDelegate {
             defer: false
         )
         newWindow.title = "Top Processes"
+        newWindow.isReleasedWhenClosed = false
         newWindow.contentView = NSHostingView(rootView: CPUProcessesView(viewModel: viewModel))
         newWindow.delegate = self
         newWindow.setContentSize(NSSize(width: 380, height: 320))
