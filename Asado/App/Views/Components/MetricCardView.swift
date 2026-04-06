@@ -11,6 +11,7 @@ struct MetricCardView: View {
     let systemImage: String
     let title: String
     let value: String
+    var action: (() -> Void)? = nil
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
@@ -31,5 +32,15 @@ struct MetricCardView: View {
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity)
         .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(alignment: .bottomTrailing) {
+            if let action {
+                Button(action: action) {
+                    Image(systemName: "arrow.up.forward.app")
+                        .font(.system(size: 12))
+                        .padding(8)
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 }
