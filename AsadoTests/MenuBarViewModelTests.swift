@@ -231,9 +231,9 @@ struct TopProcessTests {
     @Test @MainActor
     func topProcessesPopulatedWhenAboveThreshold() async throws {
         let mockProcesses = [
-            TopProcess(id: 1, name: "Safari", cpuUsage: 50.0, icon: nil),
-            TopProcess(id: 2, name: "Xcode", cpuUsage: 30.0, icon: nil),
-            TopProcess(id: 3, name: "mdworker", cpuUsage: 10.0, icon: nil)
+            TopProcess(id: 1, name: "Safari", cpuUsage: 50.0, icon: nil, isApp: true),
+            TopProcess(id: 2, name: "Xcode", cpuUsage: 30.0, icon: nil, isApp: true),
+            TopProcess(id: 3, name: "mdworker", cpuUsage: 10.0, icon: nil, isApp: false)
         ]
         let processService = MockProcessMonitoringService(processes: mockProcesses)
         let cpuService = MockCPUMonitoringService(results: [.success(95.0)])
@@ -251,7 +251,7 @@ struct TopProcessTests {
     @Test @MainActor
     func topProcessesAlwaysPopulatedRegardlessOfThreshold() async throws {
         let mockProcesses = [
-            TopProcess(id: 1, name: "Safari", cpuUsage: 50.0, icon: nil)
+            TopProcess(id: 1, name: "Safari", cpuUsage: 50.0, icon: nil, isApp: true)
         ]
         let processService = MockProcessMonitoringService(processes: mockProcesses)
         let cpuService = MockCPUMonitoringService(results: [.success(95.0), .success(20.0)])

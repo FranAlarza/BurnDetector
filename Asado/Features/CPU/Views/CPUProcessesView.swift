@@ -7,19 +7,39 @@
 
 import SwiftUI
 
+private enum ProcessFilter: String, CaseIterable {
+    case all = "All"
+    case apps = "Apps"
+    case system = "System"
+}
+
 struct CPUProcessesView: View {
     let viewModel: MenuBarViewModel
+
+    @State private var filter: ProcessFilter = .all
 
     // MARK: - Body
 
     var body: some View {
-        Group {
-            if viewModel.topProcesses.isEmpty {
+        VStack(spacing: 0) {
+            Picker("", selection: $filter) {
+                ForEach(ProcessFilter.allCases, id: \.self) { option in
+                    Text(option.rawValue).tag(option)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+
+            Divider()
+
+            let filtered = filteredProcesses
+            if filtered.isEmpty {
                 Text("No data yet")
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                List(viewModel.topProcesses) { process in
+                List(filtered) { process in
                     HStack(spacing: 10) {
                         processIcon(process)
 
@@ -44,6 +64,14 @@ struct CPUProcessesView: View {
 
     // MARK: - Private
 
+    private var filteredProcesses: [TopProcess] {
+        switch filter {
+        case .all:    return viewModel.topProcesses
+        case .apps:   return viewModel.topProcesses.filter { $0.isApp }
+        case .system: return viewModel.topProcesses.filter { !$0.isApp }
+        }
+    }
+
     @ViewBuilder
     private func processIcon(_ process: TopProcess) -> some View {
         if let nsImage = process.icon {
@@ -51,8 +79,8 @@ struct CPUProcessesView: View {
                 .resizable()
                 .frame(width: 28, height: 28)
         } else {
-            Image(systemName: "questionmark.app")
-                .font(.system(size: 24))
+            Image(systemName: "terminal")
+                .font(.system(size: 18))
                 .frame(width: 28, height: 28)
         }
     }

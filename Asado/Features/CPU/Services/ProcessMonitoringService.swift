@@ -74,8 +74,8 @@ final class ProcessMonitoringService: ProcessMonitoringServiceProtocol, @uncheck
 
             guard cpuUsage > 0 else { continue }
 
-            let (name, icon) = resolveNameAndIcon(for: pid)
-            results.append(TopProcess(id: pid, name: name, cpuUsage: cpuUsage, icon: icon))
+            let (name, icon, isApp) = resolveNameAndIcon(for: pid)
+            results.append(TopProcess(id: pid, name: name, cpuUsage: cpuUsage, icon: icon, isApp: isApp))
         }
 
         logger.debug("topProcesses: pidInfoFailures=\(pidInfoFailures), processes with cpuUsage>0: \(results.count), currentSnapshot.count=\(currentSnapshot.count)")
@@ -108,12 +108,12 @@ final class ProcessMonitoringService: ProcessMonitoringServiceProtocol, @uncheck
         return buffer.prefix(count).filter { $0 > 0 }
     }
 
-    private func resolveNameAndIcon(for pid: Int32) -> (String, NSImage?) {
+    private func resolveNameAndIcon(for pid: Int32) -> (String, NSImage?, Bool) {
         if let app = NSRunningApplication(processIdentifier: pid) {
             let name = app.localizedName ?? app.bundleIdentifier ?? rawName(for: pid)
-            return (name, app.icon)
+            return (name, app.icon, true)
         }
-        return (rawName(for: pid), nil)
+        return (rawName(for: pid), nil, false)
     }
 
     private func rawName(for pid: Int32) -> String {

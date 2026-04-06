@@ -12,4 +12,5 @@ struct TopProcess: Identifiable, @unchecked Sendable {
     let name: String
     let cpuUsage: Double
     let icon: NSImage?
+    let isApp: Bool
 }
