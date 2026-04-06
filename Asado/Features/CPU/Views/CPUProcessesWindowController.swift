@@ -13,7 +13,7 @@ final class CPUProcessesWindowController: NSObject, NSWindowDelegate {
 
     // MARK: - Private
 
-    private var window: NSWindow?
+    private(set) var window: NSWindow?
 
     // MARK: - Public
 
