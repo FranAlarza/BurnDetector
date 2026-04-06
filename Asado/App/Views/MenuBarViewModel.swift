@@ -98,7 +98,7 @@ private extension MenuBarViewModel {
                     let rounded = Int(usage.rounded())
                     self.cpuUsage = rounded
                     self.permissionsError = false
-                    self.topProcesses = self.processService.topProcesses(limit: 5)
+                    self.topProcesses = self.processService.topProcesses(limit: 20)
                     await self.checkThreshold(cpuUsage: rounded)
                 case .failure:
                     self.cpuUsage = nil

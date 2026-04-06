@@ -33,7 +33,7 @@ final class CPUProcessesWindowController: NSObject, NSWindowDelegate {
         newWindow.isReleasedWhenClosed = false
         newWindow.contentView = NSHostingView(rootView: CPUProcessesView(viewModel: viewModel))
         newWindow.delegate = self
-        newWindow.setContentSize(NSSize(width: 380, height: 320))
+        newWindow.setContentSize(NSSize(width: 380, height: 480))
         newWindow.center()
         newWindow.orderFrontRegardless()
         self.window = newWindow

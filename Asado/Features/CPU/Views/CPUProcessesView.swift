@@ -39,7 +39,7 @@ struct CPUProcessesView: View {
                 }
             }
         }
-        .frame(width: 380, height: 320)
+        .frame(width: 380, height: 480)
     }
 
     // MARK: - Private
