@@ -59,17 +59,17 @@ struct BatteryMonitoringService: BatteryMonitoringServiceProtocol {
     private func resolveHealth(from desc: [String: Any]) -> BatteryHealth? {
         // kIOPSBatteryHealthKey = "BatteryHealth", values: "Good" / "Fair" / "Poor"
         guard let healthString = desc[kIOPSBatteryHealthKey] as? String else {
-            logger.warning("BatteryHealth key not found in power source description. Keys: \(desc.keys.joined(separator: ", "))")
+            logger.warning("[Battery] - BatteryHealth key not found in power source description. Keys: \(desc.keys.joined(separator: ", "))")
             return nil
         }
-        logger.info("BatteryHealth raw value: '\(healthString)'")
+        logger.info("[Battery] - BatteryHealth raw value: '\(healthString)'")
         switch healthString {
         case "Good":  return .good
         case "Fair":  return .fair
         case "Poor":  return .poor
         default:
             // Fallback: check kIOPSBatteryHealthConditionKey used on some hardware
-            logger.warning("Unrecognised BatteryHealth value '\(healthString)', checking BatteryHealthCondition")
+            logger.warning("[Battery] - Unrecognised BatteryHealth value '\(healthString)', checking BatteryHealthCondition")
             return resolveHealthCondition(from: desc)
         }
     }
@@ -78,7 +78,7 @@ struct BatteryMonitoringService: BatteryMonitoringServiceProtocol {
         // kIOPSBatteryHealthConditionKey = "BatteryHealthCondition"
         // values: "Check Battery" / "Replace Soon" / "Replace Now"
         guard let condition = desc[kIOPSBatteryHealthConditionKey] as? String else { return nil }
-        logger.info("BatteryHealthCondition raw value: '\(condition)'")
+        logger.info("[Battery] - BatteryHealthCondition raw value: '\(condition)'")
         switch condition {
         case "Check Battery": return .fair
         case "Replace Soon":  return .fair
