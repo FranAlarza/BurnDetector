@@ -57,36 +57,20 @@ struct BatteryMonitoringService: BatteryMonitoringServiceProtocol {
     // MARK: - Private
 
     private func resolveHealth(from desc: [String: Any]) -> BatteryHealth? {
-        let dictDump = desc.map { "\($0.key): \($0.value)" }.sorted().joined(separator: ", ")
-        logger.info("[Battery] - Power source dict: { \(dictDump) }")
-
-        // kIOPSBatteryHealthKey = "BatteryHealth", values: "Good" / "Fair" / "Poor"
         guard let healthString = desc[kIOPSBatteryHealthKey] as? String else {
             logger.warning("[Battery] - BatteryHealth key not found in power source description.")
             return nil
         }
         logger.info("[Battery] - BatteryHealth raw value: '\(healthString)'")
         switch healthString {
-        case "Good":  return .good
-        case "Fair":  return .fair
-        case "Poor":  return .poor
+        case "Good":                        return .good
+        case "Fair", "Check Battery",
+             "Replace Soon":               return .fair
+        case "Poor", "Replace Now",
+             "Service Battery":            return .poor
         default:
-            // Fallback: check kIOPSBatteryHealthConditionKey used on some hardware
-            logger.warning("[Battery] - Unrecognised BatteryHealth value '\(healthString)', checking BatteryHealthCondition")
-            return resolveHealthCondition(from: desc)
-        }
-    }
-
-    private func resolveHealthCondition(from desc: [String: Any]) -> BatteryHealth? {
-        // kIOPSBatteryHealthConditionKey = "BatteryHealthCondition"
-        // values: "Check Battery" / "Replace Soon" / "Replace Now"
-        guard let condition = desc[kIOPSBatteryHealthConditionKey] as? String else { return nil }
-        logger.info("[Battery] - BatteryHealthCondition raw value: '\(condition)'")
-        switch condition {
-        case "Check Battery": return .fair
-        case "Replace Soon":  return .fair
-        case "Replace Now":   return .poor
-        default:              return nil
+            logger.warning("[Battery] - Unrecognised BatteryHealth value: '\(healthString)'")
+            return nil
         }
     }
 }
