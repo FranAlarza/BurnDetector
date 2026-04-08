@@ -48,6 +48,12 @@ struct MenuBarView: View {
                     value: viewModel.diskValueLabel,
                     action: { NSWorkspace.shared.open(storagePrefsURL) }
                 )
+                MetricCardView(
+                    systemImage: "battery.100",
+                    title: "Battery",
+                    value: batteryValueLabel,
+                    tintColor: batteryTintColor
+                )
             }
 
             // MARK: Footer
@@ -82,5 +88,25 @@ struct MenuBarView: View {
             return "Usage: \(usage)%"
         }
         return "Usage: --%"
+    }
+
+    private var batteryValueLabel: String {
+        let pct = viewModel.batteryValueLabel
+        switch viewModel.batteryInfo.chargingState {
+        case .charging:    return "\(pct) · Charging"
+        case .charged:     return "\(pct) · Charged"
+        case .discharging: return "\(pct) · Discharging"
+        case .noBattery:   return "No Battery"
+        case .unknown:     return pct
+        }
+    }
+
+    private var batteryTintColor: Color? {
+        switch viewModel.batteryInfo.health {
+        case .good: return .green
+        case .fair: return .yellow
+        case .poor: return .red
+        case nil:   return nil
+        }
     }
 }
