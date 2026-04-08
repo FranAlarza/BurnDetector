@@ -7,6 +7,7 @@
 
 import IOKit
 import IOKit.ps
+import os
 
 // MARK: - Protocol
 
@@ -17,6 +18,8 @@ protocol BatteryMonitoringServiceProtocol: Sendable {
 // MARK: - Implementation
 
 struct BatteryMonitoringService: BatteryMonitoringServiceProtocol {
+
+    private let logger = Logger(subsystem: "com.aweapps.Asado", category: "BatteryMonitoring")
 
     func batteryInfo() -> BatteryInfo {
         guard let rawInfo = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
@@ -54,12 +57,33 @@ struct BatteryMonitoringService: BatteryMonitoringServiceProtocol {
     // MARK: - Private
 
     private func resolveHealth(from desc: [String: Any]) -> BatteryHealth? {
-        guard let healthString = desc[kIOPSBatteryHealthKey] as? String else { return nil }
+        // kIOPSBatteryHealthKey = "BatteryHealth", values: "Good" / "Fair" / "Poor"
+        guard let healthString = desc[kIOPSBatteryHealthKey] as? String else {
+            logger.warning("BatteryHealth key not found in power source description. Keys: \(desc.keys.joined(separator: ", "))")
+            return nil
+        }
+        logger.info("BatteryHealth raw value: '\(healthString)'")
         switch healthString {
-        case kIOPSGoodValue: return .good
-        case kIOPSFairValue: return .fair
-        case kIOPSPoorValue: return .poor
-        default: return nil
+        case "Good":  return .good
+        case "Fair":  return .fair
+        case "Poor":  return .poor
+        default:
+            // Fallback: check kIOPSBatteryHealthConditionKey used on some hardware
+            logger.warning("Unrecognised BatteryHealth value '\(healthString)', checking BatteryHealthCondition")
+            return resolveHealthCondition(from: desc)
+        }
+    }
+
+    private func resolveHealthCondition(from desc: [String: Any]) -> BatteryHealth? {
+        // kIOPSBatteryHealthConditionKey = "BatteryHealthCondition"
+        // values: "Check Battery" / "Replace Soon" / "Replace Now"
+        guard let condition = desc[kIOPSBatteryHealthConditionKey] as? String else { return nil }
+        logger.info("BatteryHealthCondition raw value: '\(condition)'")
+        switch condition {
+        case "Check Battery": return .fair
+        case "Replace Soon":  return .fair
+        case "Replace Now":   return .poor
+        default:              return nil
         }
     }
 }
