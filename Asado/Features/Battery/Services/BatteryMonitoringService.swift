@@ -40,7 +40,7 @@ struct BatteryMonitoringService: BatteryMonitoringServiceProtocol {
             let chargingState: ChargingState
             if isCharging {
                 chargingState = .charging
-            } else if let c = current, let m = max, m > 0, c >= m {
+            } else if let currentCapacity = current, let maxCapacity = max, maxCapacity > 0, currentCapacity >= maxCapacity {
                 chargingState = .charged
             } else {
                 chargingState = .discharging
@@ -62,8 +62,9 @@ struct BatteryMonitoringService: BatteryMonitoringServiceProtocol {
             return nil
         }
         logger.info("[Battery] - BatteryHealth raw value: '\(healthString)'")
+        
         switch healthString {
-        case "Good":                        return .good
+        case "Good":                       return .good
         case "Fair", "Check Battery",
              "Replace Soon":               return .fair
         case "Poor", "Replace Now",

@@ -189,12 +189,12 @@ private extension MenuBarViewModel {
     }
 
     func isNewer(_ latest: String, than current: String) -> Bool {
-        let l = latest.split(separator: ".").compactMap { Int($0) }
-        let c = current.split(separator: ".").compactMap { Int($0) }
-        for (lv, cv) in zip(l, c) {
-            if lv != cv { return lv > cv }
+        let latestComponents = latest.split(separator: ".").compactMap { Int($0) }
+        let currentComponents = current.split(separator: ".").compactMap { Int($0) }
+        for (latestValue, currentValue) in zip(latestComponents, currentComponents) {
+            if latestValue != currentValue { return latestValue > currentValue }
         }
-        return l.count > c.count
+        return latestComponents.count > currentComponents.count
     }
 
     func checkThreshold(cpuUsage: Int) async {
