@@ -19,6 +19,7 @@ final class MenuBarViewModel {
     private(set) var topProcesses: [TopProcess] = []
     private(set) var freeDiskSpaceGB: Double?
     private(set) var isUpdateAvailable = false
+    private(set) var batteryInfo: BatteryInfo = BatteryInfo(percentage: nil, chargingState: .unknown, health: nil)
     var settings: AppSettings
 
     // MARK: - Private
@@ -28,10 +29,12 @@ final class MenuBarViewModel {
     private let storageService: CustomSoundStorageServiceProtocol
     private let processService: ProcessMonitoringServiceProtocol
     private let diskService: DiskMonitoringServiceProtocol
+    private let batteryService: BatteryMonitoringServiceProtocol
     private let updateChecker: UpdateCheckerServiceProtocol
     private let interval: TimeInterval
     private var monitoringTask: Task<Void, Never>?
     private var diskMonitoringTask: Task<Void, Never>?
+    private var batteryMonitoringTask: Task<Void, Never>?
     private var updateCheckTask: Task<Void, Never>?
     private var wakeObserverTask: Task<Void, Never>?
     private var hasExceededThreshold = false
@@ -49,10 +52,12 @@ final class MenuBarViewModel {
         storageService: CustomSoundStorageServiceProtocol = CustomSoundStorageService(),
         processService: ProcessMonitoringServiceProtocol = ProcessMonitoringService(),
         diskService: DiskMonitoringServiceProtocol = DiskMonitoringService(),
+        batteryService: BatteryMonitoringServiceProtocol = BatteryMonitoringService(),
         updateChecker: UpdateCheckerServiceProtocol = UpdateCheckerService(),
         updateCheckInterval: TimeInterval = 4 * 3600,
         interval: TimeInterval = 5.0,
-        diskInterval: TimeInterval = 60.0
+        diskInterval: TimeInterval = 60.0,
+        batteryInterval: TimeInterval = 30.0
     ) {
         self.service = service
         self.audioPlayer = audioPlayer
@@ -60,10 +65,12 @@ final class MenuBarViewModel {
         self.storageService = storageService
         self.processService = processService
         self.diskService = diskService
+        self.batteryService = batteryService
         self.updateChecker = updateChecker
         self.interval = interval
         startMonitoring()
         startDiskMonitoring(interval: diskInterval)
+        startBatteryMonitoring(interval: batteryInterval)
         startUpdateChecking(interval: updateCheckInterval)
         startWakeObserver()
     }
@@ -71,6 +78,7 @@ final class MenuBarViewModel {
     deinit {
         monitoringTask?.cancel()
         diskMonitoringTask?.cancel()
+        batteryMonitoringTask?.cancel()
         updateCheckTask?.cancel()
         wakeObserverTask?.cancel()
     }
@@ -80,6 +88,11 @@ final class MenuBarViewModel {
     var diskValueLabel: String {
         guard let gb = freeDiskSpaceGB else { return "Free: -- GB" }
         return String(format: "Free: %.1f GB", gb)
+    }
+
+    var batteryValueLabel: String {
+        guard let pct = batteryInfo.percentage else { return "--%"}
+        return "\(pct)%"
     }
 }
 
@@ -118,6 +131,18 @@ private extension MenuBarViewModel {
                 guard !Task.isCancelled else { break }
                 self.freeDiskSpaceGB = self.diskService.freeDiskSpaceGB()
                 await self.checkDiskThreshold()
+            }
+        }
+    }
+
+    func startBatteryMonitoring(interval: TimeInterval) {
+        batteryInfo = batteryService.batteryInfo()
+        batteryMonitoringTask = Task { [weak self] in
+            guard let self else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(interval))
+                guard !Task.isCancelled else { break }
+                self.batteryInfo = self.batteryService.batteryInfo()
             }
         }
     }
