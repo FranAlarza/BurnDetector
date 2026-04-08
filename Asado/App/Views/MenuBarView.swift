@@ -40,13 +40,15 @@ struct MenuBarView: View {
                     systemImage: "cpu",
                     title: "CPU",
                     value: cpuValueLabel,
-                    action: { cpuWindowController.show(viewModel: viewModel) }
+                    action: { cpuWindowController.show(viewModel: viewModel) },
+                    tintColor: cpuTintColor
                 )
                 MetricCardView(
                     systemImage: "internaldrive",
                     title: "Disk",
                     value: viewModel.diskValueLabel,
-                    action: { NSWorkspace.shared.open(storagePrefsURL) }
+                    action: { NSWorkspace.shared.open(storagePrefsURL) },
+                    tintColor: diskTintColor
                 )
                 MetricCardView(
                     systemImage: "battery.100",
@@ -112,6 +114,25 @@ struct MenuBarView: View {
         case .discharging: return "\(pct) · Discharging"
         case .noBattery:   return "No Battery"
         case .unknown:     return pct
+        }
+    }
+
+    private var cpuTintColor: Color? {
+        guard let usage = viewModel.cpuUsage else { return nil }
+        switch usage {
+        case 0...50:  return .green
+        case 51...80: return .yellow
+        default:      return .red
+        }
+    }
+
+    private var diskTintColor: Color? {
+        guard let freeGB = viewModel.freeDiskSpaceGB else { return nil }
+        let threshold = Double(viewModel.settings.diskThresholdGB)
+        switch freeGB {
+        case ..<threshold:            return .red
+        case threshold..<(threshold * 2): return .yellow
+        default:                      return .green
         }
     }
 
