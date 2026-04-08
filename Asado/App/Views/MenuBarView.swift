@@ -78,7 +78,21 @@ struct MenuBarView: View {
             
         }
         .padding()
-        .frame(width: 320)
+        .frame(width: 360)
+        .background(backgroundGradient)
+        .preferredColorScheme(.dark)
+    }
+
+    private var backgroundGradient: some View {
+        LinearGradient(
+            stops: [
+                .init(color: .asadoEmber.opacity(0.35), location: 0.0),
+                .init(color: .asadoSmoke,               location: 0.4),
+                .init(color: .asadoCoal,                location: 1.0)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
 
     // MARK: - Private
