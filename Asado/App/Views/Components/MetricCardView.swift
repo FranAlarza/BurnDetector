@@ -12,6 +12,7 @@ struct MetricCardView: View {
     let title: String
     let value: String
     var action: (() -> Void)? = nil
+    var tintColor: Color? = nil
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
@@ -31,7 +32,10 @@ struct MetricCardView: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity)
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+        .background(
+            tintColor.map { AnyShapeStyle($0.opacity(0.25)) } ?? AnyShapeStyle(.quaternary),
+            in: RoundedRectangle(cornerRadius: 12)
+        )
         .overlay(alignment: .bottomTrailing) {
             if let action {
                 Button(action: action) {
