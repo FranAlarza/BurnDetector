@@ -54,7 +54,7 @@ struct MetricCardView: View {
                         .font(.callout)
                         .multilineTextAlignment(.leading)
                         .padding(12)
-                        .frame(maxWidth: 220)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
         }

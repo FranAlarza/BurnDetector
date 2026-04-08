@@ -82,10 +82,11 @@ struct MenuBarViewInfoMessageTests {
     }
 
     @Test
-    func batteryFairHealthReturnsDecliningMessage() {
+    func batteryFairHealthReturnsCheckUpMessage() {
         let info = BatteryInfo(percentage: 72, chargingState: .discharging, health: .fair)
         let message = MenuBarInfoMessages.batteryMessage(info: info)
-        #expect(message.contains("declining"))
+        #expect(message.contains("not at full capacity"))
+        #expect(message.contains("System Settings"))
     }
 
     @Test

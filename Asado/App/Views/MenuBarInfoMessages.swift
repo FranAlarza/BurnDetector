@@ -48,7 +48,7 @@ enum MenuBarInfoMessages {
         }
         switch info.health {
         case .good: return "Your battery is in great shape. No action needed."
-        case .fair: return "Your battery health is declining. Consider a check-up soon."
+        case .fair: return "Your battery is not at full capacity. macOS recommends a check-up — you can verify it in System Settings › Battery."
         case .poor: return "Battery health is poor. It's time to replace your battery."
         case nil:   return "Battery health data is not available."
         }
