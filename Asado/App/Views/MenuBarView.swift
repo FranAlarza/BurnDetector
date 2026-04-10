@@ -20,9 +20,20 @@ struct MenuBarView: View {
     var body: some View {
         VStack(spacing: 12) {
             // MARK: Header
-            HStack {
-                Text("Asado")
-                    .font(.headline)
+            HStack(spacing: 12) {
+                Image(systemName: viewModel.macInfo.macType.symbolName)
+                    .font(.system(size: 28))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(viewModel.macInfo.modelName)
+                        .font(.headline)
+
+                    if !viewModel.macInfo.subtitleLabel.isEmpty {
+                        Text(viewModel.macInfo.subtitleLabel)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
 
                 Spacer()
 
