@@ -25,10 +25,11 @@ struct MetricCardView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.headline)
+                    .foregroundStyle(.primary)
 
                 Text(value)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(.callout)
+                    .bold()
             }
             Spacer(minLength: 0)
         }
@@ -38,6 +39,19 @@ struct MetricCardView: View {
         .background(
             tintColor.map { AnyShapeStyle($0.opacity(0.25)) } ?? AnyShapeStyle(.quaternary),
             in: RoundedRectangle(cornerRadius: 12)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(
+                    LinearGradient(
+                        colors: [.white.opacity(0.35), .white.opacity(0.05)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    ),
+                    lineWidth: 1.5
+                )
+                .shadow(color: .black.opacity(0.55), radius: 6, x: 0, y: 5)
+                .shadow(color: .black.opacity(0.25), radius: 2, x: 0, y: 1)
         )
         .overlay(alignment: .topTrailing) {
             if let message = infoMessage {

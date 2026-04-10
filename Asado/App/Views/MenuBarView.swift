@@ -96,7 +96,7 @@ struct MenuBarView: View {
             
         }
         .padding()
-        .frame(width: 360)
+        .frame(width: 400)
         .background(backgroundGradient)
         .preferredColorScheme(.dark)
     }
