@@ -21,6 +21,7 @@ final class MenuBarViewModel {
     private(set) var isUpdateAvailable = false
     private(set) var batteryInfo: BatteryInfo = BatteryInfo(percentage: nil, chargingState: .unknown, health: nil)
     private(set) var memoryInfo: MemoryInfo?
+    private(set) var macInfo: MacInfo = .fallback
     var settings: AppSettings
 
     // MARK: - Private
@@ -32,6 +33,7 @@ final class MenuBarViewModel {
     private let diskService: DiskMonitoringServiceProtocol
     private let batteryService: BatteryMonitoringServiceProtocol
     private let memoryService: MemoryMonitoringServiceProtocol
+    private let macInfoService: MacInfoServiceProtocol
     private let updateChecker: UpdateCheckerServiceProtocol
     private let interval: TimeInterval
     private var monitoringTask: Task<Void, Never>?
@@ -57,6 +59,7 @@ final class MenuBarViewModel {
         diskService: DiskMonitoringServiceProtocol = DiskMonitoringService(),
         batteryService: BatteryMonitoringServiceProtocol = BatteryMonitoringService(),
         memoryService: MemoryMonitoringServiceProtocol = MemoryMonitoringService(),
+        macInfoService: MacInfoServiceProtocol = MacInfoService(),
         updateChecker: UpdateCheckerServiceProtocol = UpdateCheckerService(),
         updateCheckInterval: TimeInterval = 4 * 3600,
         interval: TimeInterval = 5.0,
@@ -72,8 +75,10 @@ final class MenuBarViewModel {
         self.diskService = diskService
         self.batteryService = batteryService
         self.memoryService = memoryService
+        self.macInfoService = macInfoService
         self.updateChecker = updateChecker
         self.interval = interval
+        self.macInfo = macInfoService.macInfo()
         startMonitoring()
         startDiskMonitoring(interval: diskInterval)
         startBatteryMonitoring(interval: batteryInterval)
