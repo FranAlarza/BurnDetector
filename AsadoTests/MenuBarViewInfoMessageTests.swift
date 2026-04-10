@@ -95,4 +95,34 @@ struct MenuBarViewInfoMessageTests {
         let message = MenuBarInfoMessages.batteryMessage(info: info)
         #expect(message.contains("replace"))
     }
+
+    // MARK: - RAM
+
+    @Test
+    func ramNilReturnsNotAvailable() {
+        #expect(MenuBarInfoMessages.ramMessage(info: nil) == "RAM data is not available yet.")
+    }
+
+    @Test
+    func ramLowUsageReturnsLowMessage() {
+        let info = MemoryInfo(usedGB: 6.0, totalGB: 16.0, percentageUsed: 37)
+        let message = MenuBarInfoMessages.ramMessage(info: info)
+        #expect(message.contains("low"))
+    }
+
+    @Test
+    func ramModerateUsageReturnsModerateMessage() {
+        let info = MemoryInfo(usedGB: 12.0, totalGB: 16.0, percentageUsed: 75)
+        let message = MenuBarInfoMessages.ramMessage(info: info)
+        #expect(message.contains("moderate"))
+        #expect(message.contains("12.0 GB"))
+    }
+
+    @Test
+    func ramHighUsageReturnsRunningLowMessage() {
+        let info = MemoryInfo(usedGB: 14.5, totalGB: 16.0, percentageUsed: 90)
+        let message = MenuBarInfoMessages.ramMessage(info: info)
+        #expect(message.contains("running low"))
+        #expect(message.contains("14.5 GB"))
+    }
 }
