@@ -56,8 +56,21 @@ struct MenuBarView: View {
                     systemImage: "battery.100",
                     title: "Battery",
                     value: batteryValueLabel,
+                    action: {
+                        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Battery-Settings.extension")!)
+                    },
                     tintColor: batteryTintColor,
                     infoMessage: batteryInfoMessage
+                )
+                MetricCardView(
+                    systemImage: "memorychip",
+                    title: "RAM",
+                    value: viewModel.ramValueLabel,
+                    action: {
+                        NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Activity Monitor.app"))
+                    },
+                    tintColor: ramTintColor,
+                    infoMessage: ramInfoMessage
                 )
             }
 
@@ -163,5 +176,18 @@ struct MenuBarView: View {
 
     private var batteryInfoMessage: String {
         MenuBarInfoMessages.batteryMessage(info: viewModel.batteryInfo)
+    }
+
+    private var ramTintColor: Color? {
+        guard let info = viewModel.memoryInfo else { return nil }
+        switch info.percentageUsed {
+        case 0...70:  return .asadoFlame
+        case 71...85: return .yellow
+        default:      return .red
+        }
+    }
+
+    private var ramInfoMessage: String {
+        MenuBarInfoMessages.ramMessage(info: viewModel.memoryInfo)
     }
 }

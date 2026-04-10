@@ -42,6 +42,20 @@ enum MenuBarInfoMessages {
         }
     }
 
+    static func ramMessage(info: MemoryInfo?) -> String {
+        guard let info else {
+            return "RAM data is not available yet."
+        }
+        switch info.percentageUsed {
+        case 0...70:
+            return "Memory usage is low. Your Mac is running smoothly."
+        case 71...85:
+            return "Memory usage is moderate at \(String(format: "%.1f", info.usedGB)) GB. Keep an eye on open apps."
+        default:
+            return "Memory is running low at \(String(format: "%.1f", info.usedGB)) GB. Consider closing unused apps."
+        }
+    }
+
     static func batteryMessage(info: BatteryInfo) -> String {
         guard info.chargingState != .noBattery, info.percentage != nil else {
             return "No battery detected on this Mac."
